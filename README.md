@@ -1,4 +1,4 @@
-# LLM Discord Bot
+# Discord LLM Bot
 
 A Discord bot that integrates with multiple LLM providers to answer user questions when mentioned.
 
