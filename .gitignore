@@ -160,3 +160,6 @@ cython_debug/
 #.idea/
 # OS stuff
 .DS_Store
+
+#vs code stuff
+.vscode/
