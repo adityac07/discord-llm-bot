@@ -60,11 +60,11 @@ class LLMHandler:
                         )
                     else:
                         logging.error(
-                            f"Error: API returned status code {response.status}"
+                            f"API returned status code {response.status}"
                         )
                         return None
         except Exception as e:
-            logging.error(f"Error: {str(e)}")
+            logging.error(f"{str(e)}")
             return
 
     @staticmethod
@@ -78,7 +78,7 @@ class LLMHandler:
                 )
                 return response.choices[0].message.content
         except Exception as e:
-            logging.error(f"Error: {str(e)}")
+            logging.error(f"{str(e)}")
             return
 
     @staticmethod
@@ -125,7 +125,7 @@ class LLMHandler:
             )
             return response.choices[0].message.content
         except Exception as e:
-            logging.error(f"Error: {str(e)}")
+            logging.error(f"{str(e)}")
             return f"Error: {str(e)}"
 
     @staticmethod
