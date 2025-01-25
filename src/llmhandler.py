@@ -32,13 +32,18 @@ class LLMHandler:
         return cleaned_text.strip()
 
     @staticmethod
-    async def get_ollama_response(prompt: str, model: str = OLLAMA_MODEL) -> str:
+    async def get_ollama_response(prompt: str, context: list = None, model: str = OLLAMA_MODEL) -> str:
         """Get response from Ollama API"""
         try:
+            messages = []
+            if context:
+                messages.extend(context)
+            messages.append({"role": "user", "content": prompt})
+
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{OLLAMA_API_URL}/api/generate",
-                    json={"model": model, "prompt": prompt},
+                    f"{OLLAMA_API_URL}/api/chat",
+                    json={"model": model, "messages": messages},
                 ) as response:
                     if response.status == 200:
                         full_response: str = ""
@@ -47,8 +52,8 @@ class LLMHandler:
                             if line:
                                 try:
                                     json_response: dict = json.loads(line)
-                                    if "response" in json_response:
-                                        full_response += json_response["response"]
+                                    if "message" in json_response and "content" in json_response["message"]:
+                                        full_response += json_response["message"]["content"]
                                 except json.JSONDecodeError:
                                     continue
 
@@ -68,25 +73,38 @@ class LLMHandler:
             return
 
     @staticmethod
-    async def get_openai_response(prompt: str, model: str = "") -> str:
+    async def get_openai_response(prompt: str, context: list = None, model: str = OPENAI_MODEL) -> str:
         """Get response from OpenAI or OpenAI-compatible API"""
         try:
-            async with aiohttp.ClientSession() as session:
-                client = openai.AsyncOpenAI(api_key=openai.api_key, http_client=session)
-                response = await client.chat.completions.create(
-                    model=model, messages=[{"role": "user", "content": prompt}]
-                )
-                return response.choices[0].message.content
+            messages = []
+            if context:
+                messages.extend(context)
+            messages.append({"role": "user", "content": prompt})
+
+            client = AsyncOpenAI(api_key=openai.api_key)
+            response = await client.chat.completions.create(
+                model=model,
+                messages=messages
+            )
+            return response.choices[0].message.content
         except Exception as e:
             logging.error(f"{str(e)}")
-            return
+            return f"Error: {str(e)}"
 
     @staticmethod
-    async def get_gemini_response(prompt: str, model: str = GEMINI_MODEL) -> str:
+    async def get_gemini_response(prompt: str, context: list = None, model: str = GEMINI_MODEL) -> str:
         """Get response from Google Gemini API"""
         try:
+            # Gemini doesn't support chat history in the same way, so we'll concatenate context
+            full_prompt = ""
+            if context:
+                for message in context:
+                    role = "User" if message["role"] == "user" else "Assistant"
+                    full_prompt += f"{role}: {message['content']}\n\n"
+            full_prompt += f"User: {prompt}"
+
             model = genai.GenerativeModel(model)
-            response = await model.generate_content_async(prompt)
+            response = await model.generate_content_async(full_prompt)
 
             # Check if response has parts
             if not response.parts:
@@ -116,28 +134,21 @@ class LLMHandler:
             return
 
     @staticmethod
-    async def get_openai_response(prompt: str, model: str = OPENAI_MODEL) -> str:
-        """Get response from OpenAI or OpenAI-compatible API"""
-        try:
-            client = AsyncOpenAI(api_key=openai.api_key)
-            response = await client.chat.completions.create(
-                model=model, messages=[{"role": "user", "content": prompt}]
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            logging.error(f"{str(e)}")
-            return f"Error: {str(e)}"
-
-    @staticmethod
-    async def get_deepseek_response(prompt: str) -> str:
+    async def get_deepseek_response(prompt: str, context: list = None) -> str:
         """Get response from DeepSeek API"""
         try:
-            client = AsyncOpenAI(  # Use AsyncOpenAI here too
-                api_key=deepseek_api_key, base_url="https://api.deepseek.com/v1"
+            messages = []
+            if context:
+                messages.extend(context)
+            messages.append({"role": "user", "content": prompt})
+
+            client = AsyncOpenAI(
+                api_key=deepseek_api_key,
+                base_url="https://api.deepseek.com/v1"
             )
             response = await client.chat.completions.create(
                 model="deepseek-chat",
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
                 max_tokens=1000,
                 temperature=0.7,
             )
