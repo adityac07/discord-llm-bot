@@ -12,6 +12,7 @@ A Discord bot that integrates with multiple LLM providers to answer user questio
 - Automatic response chunking for long messages
 - Configurable default provider
 - Error handling and logging
+- Selective message processing (only responds to direct mentions and commands)
 
 ## Setup
 
@@ -47,7 +48,9 @@ A Discord bot that integrates with multiple LLM providers to answer user questio
 
 1. Invite the bot to your Discord server
 2. Mention the bot in a message followed by your question
-3. The bot will respond with an answer from the configured LLM provider
+3. The bot will only respond to direct mentions and commands
+4. The bot will respond with an answer from the configured LLM provider
+5. The bot is context aware and will respond follow up questions in the conversation
 
 Example:
 ```
