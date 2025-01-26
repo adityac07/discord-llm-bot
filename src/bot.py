@@ -21,7 +21,7 @@ DEFAULT_LLM_PROVIDER: str = os.getenv("DEFAULT_LLM_PROVIDER")
 # Bot setup
 intents: Intents = Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or(""), intents=intents)
 
 # Context storage
 user_contexts = defaultdict(list)
@@ -43,13 +43,15 @@ async def clear_context(ctx):
 
 @bot.event
 async def on_message(message) -> None:
-    """Respond to mentions and commands"""
+    """Respond only to direct mentions and commands"""
     if message.author == bot.user:
         return
 
-    # Process commands first
-    await bot.process_commands(message)
+    # Only process messages that mention the bot 
+    if not (bot.user.mentioned_in(message)):
+        return
 
+    # Only respond to mentions, not commands
     if bot.user.mentioned_in(message):
         question = message.content.replace(f"<@{bot.user.id}>", "").strip()
 
@@ -100,3 +102,4 @@ async def on_message(message) -> None:
 
 # Run the bot
 bot.run(os.getenv("DISCORD_TOKEN"))
+
