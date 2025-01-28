@@ -4,3 +4,4 @@ python-dotenv
 openai
 google-generativeai
 aiohttp
+httpx
